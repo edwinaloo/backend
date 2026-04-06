@@ -45,16 +45,26 @@ def create_assignment(course_id):
 def get_assignments(course_id):
     assignments = Assignment.query.filter_by(course_id=course_id).all()
 
-    result = [
-        {
+    result = []
+    today = datetime.today().date()
+    for a in assignments:
+        is_overdue = False
+        # 🔍 Check if assignment is overdue
+        if a.deadline:
+            try:
+                deadline_date = datetime.strptime(a.deadline, "%Y-%m-%d").date()
+                is_overdue = deadline_date < today and not a.completed
+            except ValueError:
+                is_overdue = False  # Invalid date format, treat as not overdue
+        
+        result.append({
             "id": a.id,
             "title": a.title,
             "deadline": a.deadline,
-            "completed": a.completed
-        }
-        for a in assignments
-    ]
-
+            "completed": a.completed,
+            "is_overdue": is_overdue
+        })  
+        
     return jsonify(result), 200
 
 # ✅ Mark Assignment as Complete/Incomplete
